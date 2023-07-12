@@ -39,7 +39,7 @@ def get_new_file_name(file_name):
     month = list_name[1][10:12]
     day = list_name[1][12:14]
     time = list_name[1][14:20]
-    new_file_name = f"{list_name[0]}_{year}_{month}_{day}_{time}_{list_name[2]}"
+    new_file_name = f"{list_name[0]}_{year}_{month}_{day}_{time}_{list_name[-1]}"
     return new_file_name
 
 
