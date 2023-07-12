@@ -21,8 +21,8 @@ def get_hash_md5(filename):
  
 """function create folder device_id"""  
 def create_folder(device_id):
-    if not os.path.isdir("C:\\storage\\" + device_id):
-        os.mkdir("C:\\storage\\" + device_id)
+    if not os.path.isdir("D:\\storage\\" + device_id):
+        os.mkdir("D:\\storage\\" + device_id)
     else:
         print(f"Folder {device_id} exists")
         logging.info(f"Folder {device_id} exists")
@@ -48,21 +48,16 @@ def create_folder_date(device_id, new_file_name):
     year = new_file_name.split("_")[1]
     month = new_file_name.split("_")[2]
     """create folder year"""
-    if not os.path.isdir("C:\\storage\\" + device_id + "\\" + year):
-        os.mkdir("C:\\storage\\" + device_id + "\\" + year)
+    if not os.path.isdir("D:\\storage\\" + device_id + "\\" + year):
+        os.mkdir("D:\\storage\\" + device_id + "\\" + year)
         print(f"Folder month {year} create successfully")
         logging.info(f"Folder month {year} create successfully")
-    else:
-        print(f"Folder year {year} exists")
-        logging.info(f"Folder year {year} exists")
+
     """create folder month"""
-    if not os.path.isdir("C:\\storage\\" + device_id + "\\" + year + "\\" + month):
-        os.mkdir("C:\\storage\\" + device_id + "\\" + year + "\\" + month)
+    if not os.path.isdir("D:\\storage\\" + device_id + "\\" + year + "\\" + month):
+        os.mkdir("D:\\storage\\" + device_id + "\\" + year + "\\" + month)
         print(f"Folder month {month} create successfully")
         logging.info(f"Folder month {month} create successfully")
-    else:
-        print(f"Folder month {month} exists")
-        logging.info(f"Folder month {month} exists")
 
 
 
@@ -70,12 +65,13 @@ def create_folder_date(device_id, new_file_name):
 
 def copy_video(file_path, file_name, device_id, new_file_name, year, month):  
     shutil.copy((file_path + "\\" + file_name),
-                "C:\\storage\\" + device_id + "\\" + year + "\\" + month + "\\" + new_file_name)
-    q = "C:\\storage\\" + device_id + "\\" + year + "\\" + month + "\\" + new_file_name
+                "D:\\storage\\" + device_id + "\\" + year + "\\" + month + "\\" + new_file_name)
+    q = "D:\\storage\\" + device_id + "\\" + year + "\\" + month + "\\" + new_file_name
     if get_hash_md5(q) == get_hash_md5(file_path + "\\" + file_name):
         print("File copied successfully.")
         os.remove(file_path + "\\" + file_name)
         print("File deleted successfully")
+
 
 
 
@@ -89,7 +85,7 @@ while len(list_disk) > 2:
             if (
                 "100RECOR" in os.listdir(link_disk + "FILE")
                 and len(os.listdir(link_disk + "FILE\\100RECOR")) > 0):
-                file_path = link_disk + "FILE\\100RECOR"
+                file_path = link_disk + "FILE\\100RECOR"   #  get path to video file
                 list_video_file = os.listdir(file_path)  #  get file list with device
                 device_id = (list_video_file[0].split("_"))[0]  #  get id device
                 print(device_id)
@@ -115,22 +111,21 @@ while len(list_disk) > 2:
             if (
                 "100RECORD" in os.listdir(link_disk + "DCIM")
                 and len(os.listdir(link_disk + "DCIM\\100RECORD")) > 0):
+                file_path = link_disk + "DCIM\\100RECORD"
                 list_video_file = os.listdir(file_path)  #  get file list with device
                 device_id = (list_video_file[0].split("_"))[0]  #  get id device
                 print(device_id)
-                logging.info(device_id)
+                logging.info(device_id)  # write in log file device_id
                 logging.info(f"On device {device_id} is {len(list_video_file)} files") # write in log file len file list        
                 create_folder(device_id)    #  function create folder device_id
                 for file_name in list_video_file:
-                    get_new_file_name(file_name)   #  function get new file name
-                    create_folder_date(device_id, year, month)
+                    create_folder_date(device_id, get_new_file_name(file_name))
+                    year = (get_new_file_name(file_name)).split("_")[1]
+                    month = (get_new_file_name(file_name)).split("_")[2]
                     try:
                         print(file_name)
-                        copy_video(file_path, file_name, device_id)
+                        copy_video(file_path, file_name, device_id, get_new_file_name(file_name), year, month)
 
                     # If source and destination are same
-                    except shutil.SameFileError:
-                        logging.info("Source and destination represents the same file.")
-
-            else:
-                pass
+                    except:
+                        logging.info("Can not copy {file_name}")
