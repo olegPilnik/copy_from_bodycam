@@ -103,7 +103,8 @@ while len(list_disk) > 2:
                     # If source and destination are same
                     except:
                         logging.info("Can not copy {file_name}")
-
+                print(f"{device_id} device is cleaned")
+                logging.info(f"{device_id} device is cleaned")
             else:
                 pass
 
@@ -129,3 +130,7 @@ while len(list_disk) > 2:
                     # If source and destination are same
                     except:
                         logging.info("Can not copy {file_name}")
+                print(f"{device_id} device is cleaned")
+                logging.info(f"{device_id} device is cleaned")
+            else:
+                pass
