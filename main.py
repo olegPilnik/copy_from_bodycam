@@ -1,11 +1,17 @@
 import os
-import psutil
 import shutil
 import hashlib
 import logging
 
-import concurrent.futures  # Модуль concurrent.futures позволяет запускать несколько потоков/процессов и получать из них данные.
+import time
+"""Импортирую модуль прогресса"""
+from alive_progress import alive_bar
 
+"""Импортирую функцию disk_partitions библиотеки psutil для  получения информации о разделах диска."""
+from psutil import disk_partitions
+
+"""Импортирую класс ThreadPoolExecutor модуля concurrent.futures для запуска нескольких потоков"""
+from concurrent.futures import ThreadPoolExecutor
 
 logging.basicConfig(
     level=logging.INFO,
@@ -18,21 +24,21 @@ logging.basicConfig(
 hdd_storage = 'C:'
 
 
-def get_hash_md5(filename):
-    """function get hash sum object"""
-    with open(filename, "rb") as f:
-        hash_object = hashlib.md5(f.read())
-        return hash_object.hexdigest()
+# def get_hash_md5(filename):
+#     """function get hash sum object"""
+#     with open(filename, "rb") as f:
+#         hash_object = hashlib.md5(f.read())
+#         return hash_object.hexdigest()
  
 
-def create_folder(device_id):
+def create_folder(hdd_storage, device_id):
     """function create folder device_id""" 
-    if not os.path.isdir(hdd_storage + "\\storage\\" + device_id):
-        os.mkdir(hdd_storage + "\\storage\\" + device_id)
-    else:
-        print(f"Folder {device_id} exists")
-        logging.info(f"Folder {device_id} exists")
+    if not os.path.isdir(f'{hdd_storage}\storage\{device_id}'):
+        os.mkdir(f'{hdd_storage}\storage\{device_id}')
+        print(f'Folder {device_id} created successfully')
     
+    else:
+        print(f"Folder {device_id} exists")   
 
 def get_new_file_name(file_name):
     """function get new file name""" 
@@ -43,7 +49,6 @@ def get_new_file_name(file_name):
     time = list_name[1][14:20]
     new_file_name = f"{list_name[0]}_{year}_{month}_{day}_{time}_{list_name[-1]}"
     return new_file_name
-
 
 def create_folder_date(device_id, new_file_name):
     """function create folder date"""
@@ -62,12 +67,10 @@ def create_folder_date(device_id, new_file_name):
             logging.info(f"Folder month {month} create successfully")
 
         else:
-            print(f"Folder {month} exists")
-            logging.info(f"Folder {month} exists")
+            pass
 
     else:
-        print(f"Folder {year} exists")
-        logging.info(f"Folder {year} exists")
+        pass
 
 
 def copy_video(file_path, file_name, device_id, new_file_name, year, month):  
@@ -88,6 +91,7 @@ def copy_video(file_path, file_name, device_id, new_file_name, year, month):
 
 def process_device_disk(link_disk):
     if "FILE" in os.listdir(link_disk):
+
         if (
             "100RECOR" in os.listdir(link_disk + "FILE")
             and len(os.listdir(link_disk + "FILE\\100RECOR")) > 0):
@@ -97,27 +101,34 @@ def process_device_disk(link_disk):
             print(device_id)
             logging.info(device_id)  # write in log file device_id
             logging.info(f"On device {device_id} is {len(list_video_file)} files") # write in log file len file list        
-            
-            create_folder(device_id)    #  function create folder device_id
-            
-            for file_name in list_video_file:
-            
-                create_folder_date(device_id, get_new_file_name(file_name))
-                year = (get_new_file_name(file_name)).split("_")[1]
-                month = (get_new_file_name(file_name)).split("_")[2]
-                try:
-                    copy_video(file_path, file_name, device_id, get_new_file_name(file_name), year, month)
+            try:
+                create_folder(hdd_storage, device_id)    #  function create folder device_id
+            except Exception as exc:
+                print(f"Generated an exception: {exc}")   
+    
+            with alive_bar(len(list_video_file)) as bar:
+                for file_name in list_video_file:
+                    bar()
+                    try:
+                        create_folder_date(device_id, get_new_file_name(file_name))
+                        year = (get_new_file_name(file_name)).split("_")[1]
+                        month = (get_new_file_name(file_name)).split("_")[2]
+                    except Exception as exc:
+                        print(f"Generated an exception: {exc}")
 
-                # If source and destination are same
-                except:
-                    logging.info(f"Can not function copy")
-        
+                    try:
+                        copy_video(file_path, file_name, device_id, get_new_file_name(file_name), year, month)
+                    except Exception as exc:
+                        print(f"Generated an exception: {exc}")
+
         else:
             print(f"{device_id} device is cleaned, disk {link_disk} can be disabled")
             logging.info(f"{device_id} device is cleaned")
+            
         
         
     elif "DCIM" in os.listdir(link_disk):
+       
         if (
             "100RECORD" in os.listdir(link_disk + "DCIM")
             and len(os.listdir(link_disk + "DCIM\\100RECORD")) > 0):
@@ -127,43 +138,56 @@ def process_device_disk(link_disk):
             print(device_id)
             logging.info(device_id)  # write in log file device_id
             logging.info(f"On device {device_id} is {len(list_video_file)} files") # write in log file len file list        
-            create_folder(device_id)    #  function create folder device_id
-            for file_name in list_video_file:
-                create_folder_date(device_id, get_new_file_name(file_name))
-                year = (get_new_file_name(file_name)).split("_")[1]
-                month = (get_new_file_name(file_name)).split("_")[2]
-                try:
-                    print(file_name)
-                    copy_video(file_path, file_name, device_id, get_new_file_name(file_name), year, month)
+            try:
+                create_folder(hdd_storage, device_id)    #  function create folder device_id
+            except Exception as exc:
+                print(f"Generated an exception: {exc}")
 
-                # If source and destination are same
-                except:
-                    logging.info(f"Can not copy {file_name}")
-        
+            with alive_bar(len(list_video_file)) as bar:
+                for file_name in tqdm.tqdm(list_video_file):
+                    bar()
+                    try:
+                        create_folder_date(device_id, get_new_file_name(file_name))
+                        year = (get_new_file_name(file_name)).split("_")[1]
+                        month = (get_new_file_name(file_name)).split("_")[2]
+                    except Exception as exc:
+                        print(f"Generated an exception: {exc}")
+
+                    try:
+                        copy_video(file_path, file_name, device_id, get_new_file_name(file_name), year, month)
+                    
+                    except Exception as exc:
+                        print(f"Generated an exception: {exc}") 
+                
         else:
             print(f"{device_id} device is cleaned, disk {link_disk} can be disabled")
             logging.info(f"{device_id} device is cleaned")
+    else:
+        print(f'Disk "{link_disk}" is not a body camera')
+    
+    return link_disk
 
 
 def main():
-    list_disk = psutil.disk_partitions(all=False)
+    """атрибут (all=False) указывает, что необходимо вернуть
+      только физические устройства, а не виртуальные."""
+    list_disk = disk_partitions(all=False)
+    
 
-    # while len(list_disk) > 2:
-        # list_disk = psutil.disk_partitions(all=False)  #  Get a list of all disks
-    for disk in list_disk:
-        link_disk = disk.device
+    """Создаем объект executor как экземпляр класса ThreadPoolExecutor(класс для работы с потоками)"""
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        
+        """с помощью метода map запускаем функцию 'process_device_disk' в разных потоках """
+        results = executor.map(process_device_disk, [disk.device for disk in list_disk])
+        for result in results:
             
+            try:
+                print(f"Finished processing {result}")
+   
+            except Exception as exc:
+                print(f"Processing {result} generated an exception: {exc}")
 
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_device = {executor.submit(process_device_disk, disk.device): disk for disk in list_disk}
-        for future in concurrent.futures.as_completed(future_to_device):
-            disk = future_to_device[future]
-            future.result()
-            # except Exception as exc:
-            #     print(f"Processing {disk.device} generated an exception: {exc}")
-            # else:
-            #     print(f"Finished processing {disk.device}")
+            
 
 if __name__ == "__main__":
     main()
